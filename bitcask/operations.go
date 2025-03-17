@@ -57,15 +57,21 @@ func (bc *Bitcask) Get(key string) ([]byte, error) {
 
 func (bc *Bitcask) Delete(key string) error {
 	bc.mu.Lock()
-	defer bc.mu.Unlock()
 
 	if _, exists := bc.index[key]; !exists {
+		bc.mu.Unlock()
 		return errors.New("Key not found")
 	}
 
-	bc.Put(key, []byte{})
+	bc.mu.Unlock()
+	if err := bc.Put(key, []byte{}); err != nil {
+		return err
+	}
 
+	bc.mu.Lock()
+	defer bc.mu.Unlock()
 	delete(bc.index, key)
+
 	return nil
 }
 
