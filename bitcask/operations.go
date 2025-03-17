@@ -68,3 +68,14 @@ func (bc *Bitcask) Delete(key string) error {
 	delete(bc.index, key)
 	return nil
 }
+
+func (bc *Bitcask) ListKeys() []string {
+	bc.mu.RLock()
+	defer bc.mu.RUnlock()
+
+	keys := make([]string, 0, len(bc.index))
+	for key := range bc.index {
+		keys = append(keys, key)
+	}
+	return keys
+}
