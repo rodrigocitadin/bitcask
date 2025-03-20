@@ -44,6 +44,37 @@ func New(dir string, index int) (*Datafile, error) {
 	return df, nil
 }
 
+func (d *Datafile) Sync() error {
+	return d.writer.Sync()
+}
+
+func (d *Datafile) Read(pos int, size int) ([]byte, error) {
+	start := int64(pos - size)
+	record := make([]byte, size)
+
+	n, err := d.reader.ReadAt(record, start)
+	if err != nil {
+		return nil, err
+	}
+
+	if n != int(size) {
+		return nil, fmt.Errorf("error fetching record, invalid size")
+	}
+
+	return record, nil
+}
+
+func (d *Datafile) Write(data []byte) (int, error) {
+	if _, err := d.writer.Write(data); err != nil {
+		return -1, err
+	}
+
+	offset := d.offset
+	d.offset += len(data)
+
+	return offset, nil
+}
+
 func (d *Datafile) Close() error {
 	if err := d.writer.Close(); err != nil {
 		return err
