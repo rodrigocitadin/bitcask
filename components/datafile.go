@@ -16,7 +16,7 @@ type Datafile struct {
 	offset int
 }
 
-func New(dir string, index int) (*Datafile, error) {
+func NewDatafile(dir string, index int) (*Datafile, error) {
 	path := filepath.Join(dir, fmt.Sprintf("bitcask_%d.db", index))
 
 	writer, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
