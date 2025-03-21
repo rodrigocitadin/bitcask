@@ -11,5 +11,5 @@ type Record struct {
 }
 
 func (r *Record) IsValidChecksum() bool {
-	return crc32.ChecksumIEEE([]byte(r.Key+string(r.Value))) == r.Header.Checksum
+	return crc32.ChecksumIEEE(r.Value) == r.Header.Checksum
 }
