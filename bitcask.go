@@ -1,4 +1,4 @@
-package main
+package bitcask
 
 import (
 	"bytes"
@@ -21,7 +21,7 @@ type Bitcask struct {
 	Stale    map[int]*components.Datafile
 }
 
-func Init(dir string) (*Bitcask, error) {
+func NewBitcask(dir string) (*Bitcask, error) {
 	var (
 		index = 0
 		stale = map[int]*components.Datafile{}

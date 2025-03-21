@@ -10,10 +10,10 @@ import (
 type Datafile struct {
 	sync.RWMutex
 
-	writer *os.File
-	reader *os.File
-	id     int
-	offset int
+	Writer *os.File
+	Reader *os.File
+	ID     int
+	Offset int
 }
 
 func NewDatafile(dir string, index int) (*Datafile, error) {
@@ -35,24 +35,24 @@ func NewDatafile(dir string, index int) (*Datafile, error) {
 	}
 
 	df := &Datafile{
-		writer: writer,
-		reader: reader,
-		id:     index,
-		offset: int(stat.Size()),
+		Writer: writer,
+		Reader: reader,
+		ID:     index,
+		Offset: int(stat.Size()),
 	}
 
 	return df, nil
 }
 
 func (d *Datafile) Sync() error {
-	return d.writer.Sync()
+	return d.Writer.Sync()
 }
 
 func (d *Datafile) Read(pos int, size int) ([]byte, error) {
 	start := int64(pos - size)
 	record := make([]byte, size)
 
-	n, err := d.reader.ReadAt(record, start)
+	n, err := d.Reader.ReadAt(record, start)
 	if err != nil {
 		return nil, err
 	}
@@ -65,22 +65,22 @@ func (d *Datafile) Read(pos int, size int) ([]byte, error) {
 }
 
 func (d *Datafile) Write(data []byte) (int, error) {
-	if _, err := d.writer.Write(data); err != nil {
+	if _, err := d.Writer.Write(data); err != nil {
 		return -1, err
 	}
 
-	offset := d.offset
-	d.offset += len(data)
+	offset := d.Offset
+	d.Offset += len(data)
 
 	return offset, nil
 }
 
 func (d *Datafile) Close() error {
-	if err := d.writer.Close(); err != nil {
+	if err := d.Writer.Close(); err != nil {
 		return err
 	}
 
-	if err := d.reader.Close(); err != nil {
+	if err := d.Reader.Close(); err != nil {
 		return err
 	}
 
