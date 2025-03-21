@@ -75,3 +75,12 @@ func (b *Bitcask) Get(key string) (*components.Record, error) {
 		Value:  value,
 	}, nil
 }
+
+func (b *Bitcask) Delete(key string) error {
+	if err := b.Put(key, []byte{}); err != nil {
+		return err
+	}
+
+	delete(b.Keydir, key)
+	return nil
+}
