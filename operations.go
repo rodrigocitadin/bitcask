@@ -41,3 +41,37 @@ func (b *Bitcask) Put(key string, value []byte) error {
 
 	return nil
 }
+
+func (b *Bitcask) Get(key string) (*components.Record, error) {
+	meta, ok := b.Keydir[key]
+	if !ok {
+		return nil, fmt.Errorf("Key not found: %v", key)
+	}
+	var header components.Header
+
+	reader := b.Datafile
+	if meta.FileID != reader.ID {
+		reader, ok = b.Stale[meta.FileID]
+		if !ok {
+			return nil, fmt.Errorf("Error looking up for the db file or the given id: %d", meta.FileID)
+		}
+	}
+
+	data, err := reader.Read(meta.RecordPos, meta.RecordSize)
+	if err != nil {
+		return nil, fmt.Errorf("Error reading data from file: %v", err)
+	}
+
+	if err := header.Decode(data); err != nil {
+		return nil, fmt.Errorf("Error decoding header: %v", err)
+	}
+
+	valPos := meta.RecordSize - int(header.ValueSize)
+	value := data[valPos:]
+
+	return &components.Record{
+		Header: header,
+		Key:    key,
+		Value:  value,
+	}, nil
+}
