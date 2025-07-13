@@ -1,3 +1,5 @@
+use std::fs::OpenOptions;
+use std::path::Path;
 use std::sync::RwLock;
 use std::{collections::HashMap, fs::File};
 
@@ -23,9 +25,9 @@ struct Entry {
 
 struct State {
     memtable: HashMap<Vec<u8>, Entry>,
-    active_file_size: u64,
+    active_file_size: u32,
+    active_file_id: u32,
     active_file: File,
-    active_file_id: u64,
 }
 
 pub struct Config {
@@ -41,8 +43,38 @@ pub struct Bitcask {
 }
 
 impl Bitcask {
-    pub fn open() {
-        todo!()
+    pub fn open(config: Config) -> Result<Self, std::io::Error> {
+        std::fs::create_dir_all(&config.dir)?;
+
+        let files: Vec<String> = std::fs::read_dir(&config.dir)
+            .unwrap()
+            .map(|f| f.unwrap().path().display().to_string())
+            .filter(|f| f.contains("data"))
+            .collect();
+
+        let active_file_id = files
+            .iter()
+            .map(|f| f.split('.').last().unwrap().parse::<u32>().unwrap())
+            .max()
+            .unwrap_or(0)
+            + 1;
+
+        let active_file_path = Path::new(&config.dir).join(format!("data.{}", active_file_id));
+
+        let active_file = OpenOptions::new()
+            .read(true)
+            .create(true)
+            .append(config.writer)
+            .open(active_file_path)?;
+
+        let state = RwLock::new(State {
+            active_file_id,
+            active_file,
+            active_file_size: 0,
+            memtable: HashMap::new(),
+        });
+
+        Self { state, config }
     }
 
     pub fn get() {
